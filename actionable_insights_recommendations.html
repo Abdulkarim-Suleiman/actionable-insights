@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Actionable Insights & Recommendations — crafted by Abdulkarim</title>
+<meta name="description" content="Paste any text → get actionable insights, recommendations, risks, decisions, action plan (owner/deadline), KPIs, and a concise takeaway. Runs offline.">
+<link rel="icon" href="data:,">
+<style>
+  :root{
+    --bg:#0a0f18; --ink:#e7eef9; --muted:#9db2cc; --panel:#111a2a; --panel2:#0d1522; --stroke:rgba(255,255,255,.08);
+    --a1:#63e6ff; --a2:#8b7bff; --ok:#10b981; --warn:#f59e0b; --bad:#ef4444;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0; background: radial-gradient(1200px 700px at 70% -20%, rgba(99,230,255,.12), transparent 70%),
+                         radial-gradient(900px 600px at -20% 60%, rgba(139,123,255,.10), transparent 70%),
+                         var(--bg);
+    color:var(--ink); font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+  }
+  header{display:flex; gap:12px; align-items:center; padding:16px 16px 8px}
+  .logo{width:40px;height:40px;border-radius:12px;background:conic-gradient(from 180deg, var(--a1), var(--a2), var(--a1));
+        box-shadow:0 10px 32px rgba(99,230,255,.35)}
+  h1{margin:0;font-size:22px;font-weight:900}
+  .sub{color:var(--muted);font-size:13px}
+  .ribbon{margin-left:auto;background:linear-gradient(90deg,var(--a1),var(--a2));color:#02131e;
+          padding:8px 12px;border-radius:999px;font-weight:800;font-size:12px;border:1px solid rgba(255,255,255,.35)}
+  main{display:grid; grid-template-columns: 520px 1fr; gap:16px; padding:12px 16px 20px}
+  @media (max-width: 1100px){ main{grid-template-columns: 1fr} }
+  .card{background: linear-gradient(180deg, rgba(255,255,255,.02), transparent 12%), var(--panel);
+        border:1px solid var(--stroke); border-radius:16px; padding:14px; box-shadow:0 20px 60px rgba(0,0,0,.35)}
+  textarea{width:100%;min-height:260px;resize:vertical;background:var(--panel2);color:var(--ink);
+           border:1px solid var(--stroke); border-radius:12px; padding:12px; line-height:1.4; font-size:14px}
+  .controls{display:flex; gap:10px; flex-wrap:wrap; margin-top:8px; align-items:center}
+  button{border:0;border-radius:12px;padding:10px 14px;font-weight:900;cursor:pointer;
+         background:linear-gradient(180deg,var(--a1),#359bff);color:#00111d;
+         box-shadow:0 10px 30px rgba(99,230,255,.35), inset 0 0 0 1px rgba(255,255,255,.35)}
+  button.secondary{background:linear-gradient(180deg,#263246,#1a2233); color:var(--ink);
+                   box-shadow: inset 0 0 0 1px rgba(255,255,255,.08)}
+  select{padding:9px 12px;border-radius:12px;background:#0c1422;color:var(--ink);border:1px solid var(--stroke)}
+  .hint{color:var(--muted); font-size:12px; margin-top:6px}
+  .grid{display:grid; grid-template-columns: repeat(3,1fr); gap:12px; margin-top:10px}
+  .kpi{background:var(--panel2);border-radius:12px;padding:12px;border:1px solid var(--stroke)}
+  .kpi h3{margin:0;font-size:12px;color:var(--muted);font-weight:700}
+  .kpi .val{font-size:15px;margin-top:6px;font-weight:800}
+  .out{display:grid; grid-template-columns:1fr; gap:12px; margin-top:12px}
+  .block{padding:12px;border:1px solid var(--stroke); border-radius:12px; background:var(--panel2)}
+  .block h3{margin:0 0 6px 0; font-size:15px}
+  .ul{padding-inline-start:18px}
+  .twocol{display:grid; grid-template-columns: 1fr 1fr; gap:12px}
+  .mini{font-size:12px;color:var(--muted)}
+  .pill{display:inline-block;padding:4px 8px;border-radius:999px;border:1px solid rgba(255,255,255,.12);font-size:11px;margin-right:6px}
+  textarea.small{min-height:120px}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo"></div>
+  <div>
+    <h1>Actionable Insights & Recommendations</h1>
+    <div class="sub">Paste any text → get insights, risks, decisions, KPIs, and a ready action plan. <b>crafted by Abdulkarim</b>.</div>
+  </div>
+  <div class="ribbon">ACTIONABLE</div>
+</header>
+
+<main>
+  <section class="card">
+    <textarea id="input" placeholder="Paste text: notes, reports, emails, memos (English or العربية)…"></textarea>
+    <div class="controls">
+      <button id="demo">Load Demo</button>
+      <button class="secondary" id="clear">Clear</button>
+      <button id="analyze">Get Insights</button>
+      <button class="secondary" id="csv">Export Actions CSV</button>
+      <select id="preset">
+        <option value="general" selected>Preset: General</option>
+        <option value="eng">Engineering</option>
+        <option value="gov">Government</option>
+        <option value="ops">Operations</option>
+        <option value="finance">Finance</option>
+        <option value="sales">Sales</option>
+      </select>
+    </div>
+    <div class="hint">Outputs: key insights, recommendations, risks, decisions, action items (owner/deadline), relevant KPIs, and a clear takeaway.</div>
+    <div class="grid">
+      <div class="kpi"><h3>Language</h3><div class="val" id="lang">–</div></div>
+      <div class="kpi"><h3>Sentiment</h3><div class="val" id="sent">–</div></div>
+      <div class="kpi"><h3>Priority</h3><div class="val" id="prio">–</div></div>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="out">
+      <div class="twocol">
+        <div class="block">
+          <h3>Key Insights</h3>
+          <div id="insights">–</div>
+        </div>
+        <div class="block">
+          <h3>Recommendations</h3>
+          <div id="recs">–</div>
+        </div>
+      </div>
+
+      <div class="twocol">
+        <div class="block">
+          <h3>Risks / Blockers</h3>
+          <div id="risks">–</div>
+        </div>
+        <div class="block">
+          <h3>Decisions / Approvals</h3>
+          <div id="decisions">–</div>
+        </div>
+      </div>
+
+      <div class="twocol">
+        <div class="block">
+          <h3>Action Plan (owner / deadline)</h3>
+          <div id="actions">–</div>
+        </div>
+        <div class="block">
+          <h3>Relevant KPIs</h3>
+          <div id="kpis">–</div>
+        </div>
+      </div>
+
+      <div class="block">
+        <h3>Concise Takeaway</h3>
+        <textarea id="takeaway" class="small"></textarea>
+      </div>
+    </div>
+  </section>
+</main>
+
+<div class="footer mini" style="text-align:center; padding-bottom:18px">© crafted by Abdulkarim — Offline heuristic analyzer. No data leaves your browser.</div>
+
+<script>
+// ===== Language & helpers
+function isArabic(s){ return /[\\u0600-\\u06FF]/.test(s); }
+function sentences(s){ return s.split(/(?<=[\\.!?…؟،])\\s+|\\n+/).map(x=>x.trim()).filter(Boolean); }
+function words(s){ return s.toLowerCase().replace(/[^\\p{L}\\p{N}\\s]/gu,' ').split(/\\s+/).filter(Boolean); }
+
+function sentimentScore(s){
+  const neg=/\\b(delay|blocked|issue|problem|broken|angry|unhappy|late|risk|escalate|complain|urgent|مشكل|تأخير|مخاطر)\\b/i;
+  const pos=/\\bthanks|great|good|appreciate|pleased|glad|resolved|happy|ممتاز|جيد|شكرا\\b/i;
+  let score=0; if(neg.test(s)) score-=1; if(pos.test(s)) score+=1;
+  return score<0?'Negative':score>0?'Positive':'Neutral';
+}
+function priority(s){
+  const high=/(urgent|asap|today|by (mon|tue|wed|thu|fri)|end of day|eod|this week|tomorrow|قبل نهاية اليوم|عاجل|اليوم|الآن)/i;
+  const med=/(next week|soon|by month|within|قريباً|الأسبوع القادم)/i;
+  return high.test(s)?'High':med.test(s)?'Medium':'Normal';
+}
+
+function keyInsights(s){
+  const sents=sentences(s); const ws=words(s);
+  const freq=new Map(); ws.forEach(w=>freq.set(w,(freq.get(w)||0)+1));
+  const cues=/(key|insight|important|means|therefore|so|note|summary|المهم|خلاصة|يعني)/i;
+  const ranked=sents.map((t,i)=>{
+    const w=words(t); const base=w.reduce((a,x)=>a+(freq.get(x)||0),0)/Math.sqrt(w.length+1);
+    const cue=cues.test(t)?2:0; return {i,t,score:base+cue};
+  }).sort((a,b)=>b.score-a.score);
+  return ranked.slice(0,5).sort((a,b)=>a.i-b.i).map(x=>x.t);
+}
+
+function recommendations(s, preset){
+  const isAr=isArabic(s);
+  const gen = isAr
+    ? ["• تحديد الأولويات","• تبسيط الخطوات","• توثيق المسؤوليات","• وضع جدول زمني","• قياس النتائج"]
+    : ["• Prioritize focus areas","• Simplify steps","• Assign clear owners","• Set a timeline","• Measure outcomes"];
+  const extra = {
+    eng: ["• Automate repetitive checks","• Add a rollback plan","• Track cycle time & defects"],
+    gov: ["• Define SLA targets","• Add citizen comms template","• Track queue time & FCR"],
+    ops: ["• Standardize handoffs","• Buffer inventory for peaks","• Track on-time completion"],
+    finance: ["• Compare actuals vs budget","• Tighten cost controls","• Track run-rate & variance"],
+    sales: ["• Clarify ICP & messaging","• Shorten follow-up window","• Track conversion & win rate"],
+    general: []
+  }[preset||'general'];
+  return (gen).concat(extra||[]);
+}
+
+function decisionLines(s){
+  const patt=/(decided|approved|agreed|we will|we'll|let's|قرار|تمت الموافقة|اتفقنا|سنقوم)/i;
+  return sentences(s).filter(x=>patt.test(x)).slice(0,6);
+}
+function riskLines(s){
+  const patt=/(risk|delay|blocked|issue|depends on|waiting for|مخاطر|تأخير|عالق|مشكلة|اعتماد)/i;
+  return sentences(s).filter(x=>patt.test(x)).slice(0,6);
+}
+
+function actionItems(s){
+  const sents=sentences(s);
+  const ownerRegex=/(?:@?([A-Z][a-z]+|[A-Z]{2,}|[\\u0600-\\u06FF]{2,}))(?:[:,])?/;
+  const deadlineRegex=/(?:by|before|on)\\s+([A-Z][a-z]+\\s+\\d{1,2}|\\d{1,2}\\/\\d{1,2}|EOD|today|tomorrow|next week|end of week|الْيوم|غداً|غدا|الأسبوع القادم|نهاية الأسبوع)/i;
+  const verbsEN=/(please|kindly|need to|let's|assign|prepare|review|send|draft|design|build|test|deploy|call|email|schedule|summarize|update|approve|escalate|investigate|train|meet|align|decide|budget|purchase|migrate|configure|validate|measure)/i;
+  const verbsAR=/(يرجى|الرجاء|فضلاً|نحتاج|سنقوم|تواصل|أرسل|ارسال|إرسال|مراجعة|اعتماد|تحضير|تصميم|اختبار|نشر|تركيب|جدولة|اجتماع|تحديث|قرار|شراء|ترحيل|تهيئة|التحقق|القياس)/i;
+  const out=[];
+  for(const t of sents){
+    if(verbsEN.test(t) || verbsAR.test(t)){
+      const owner=(t.match(ownerRegex)||[])[1]||'';
+      const deadline=(t.match(deadlineRegex)||[])[1]||'';
+      out.push({text:t, owner:owner, deadline:deadline});
+    }
+  }
+  return out.slice(0,10);
+}
+
+const KPI_SETS={
+  eng:["Cycle time","Defect rate","Deployment frequency","Lead time for changes"],
+  gov:["SLA adherence","Queue time","First-contact resolution","Citizen satisfaction"],
+  ops:["On-time completion","Throughput","Rework rate","Downtime"],
+  finance:["Budget variance","Run-rate vs forecast","Unit economics","AR days"],
+  sales:["Conversion rate","Win rate","Pipeline coverage","Time-to-close"],
+  general:["Time to complete","Quality/errors","Stakeholder satisfaction","Cost vs budget"]
+};
+function pickKPIs(preset){ return KPI_SETS[preset] || KPI_SETS.general; }
+
+function takeawayText(s, insights){
+  const head = (insights[0]||'').replace(/\\.$/,'');
+  return `Takeaway: ${head}. Focus on 3 moves this week and measure impact with 2–3 KPIs.`;
+}
+
+// CSV export
+function exportCSV(rows){
+  const head = "Action,Owner,Deadline\n";
+  const body = rows.map(r=>`"${r.text.replace(/"/g,'""')}",${r.owner||""},${r.deadline||""}`).join("\n");
+  const blob = new Blob([head+body], {type:"text/csv"});
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = "actions.csv"; a.click();
+}
+
+// Wire up UI
+const input = document.getElementById('input');
+document.getElementById('demo').onclick = ()=>{
+  input.value = `We observed a 12% drop in service capacity this week due to staffing gaps.
+Customers are waiting longer and complaints increased.
+Proposal: add a temporary night shift, prioritize high-impact tickets, and publish a short status update.
+Need leadership approval and a review on Thursday.`;
+};
+document.getElementById('clear').onclick = ()=>{
+  input.value="";
+  ["lang","sent","prio","insights","recs","risks","decisions","actions","kpis"].forEach(id=>document.getElementById(id).textContent="–");
+  document.getElementById('takeaway').value="";
+};
+document.getElementById('analyze').onclick = ()=>{
+  const raw = input.value.trim(); if(!raw){ alert("Paste some text first."); return; }
+  const preset = document.getElementById('preset').value;
+  document.getElementById('lang').textContent = isArabic(raw) ? "Arabic / العربية" : "English";
+  document.getElementById('sent').textContent = sentimentScore(raw);
+  document.getElementById('prio').textContent = priority(raw);
+
+  const ins = keyInsights(raw);
+  document.getElementById('insights').innerHTML = "<ul class='ul'>"+ins.map(p=>"<li>"+p+"</li>").join("")+"</ul>";
+
+  const recs = recommendations(raw, preset);
+  document.getElementById('recs').innerHTML = "<ul class='ul'>"+recs.map(p=>"<li>"+p+"</li>").join("")+"</ul>";
+
+  const risks = riskLines(raw);
+  document.getElementById('risks').innerHTML = risks.length? "<ul class='ul'>"+risks.map(p=>"<li>"+p+"</li>").join("")+"</ul>" : "—";
+
+  const dec = decisionLines(raw);
+  document.getElementById('decisions').innerHTML = dec.length? "<ul class='ul'>"+dec.map(p=>"<li>"+p+"</li>").join("")+"</ul>" : "—";
+
+  const acts = actionItems(raw);
+  document.getElementById('actions').innerHTML = acts.length? "<ul class='ul'>"+acts.map(a=>"<li>"+(a.owner?("<span class='pill'>"+a.owner+"</span> "):"")+a.text+(a.deadline?(" <span class='pill'>"+a.deadline+"</span>"):"")+"</li>").join("")+"</ul>" : "—";
+  window.__actions = acts;
+
+  const kpis = pickKPIs(preset);
+  document.getElementById('kpis').innerHTML = "<ul class='ul'>"+kpis.map(k=>"<li>"+k+"</li>").join("")+"</ul>";
+
+  document.getElementById('takeaway').value = takeawayText(raw, ins);
+};
+document.getElementById('csv').onclick = ()=>{
+  const rows = window.__actions || [];
+  if(!rows.length){ alert("No actions found yet. Click Get Insights first."); return; }
+  exportCSV(rows);
+};
+</script>
+</body>
+</html>
